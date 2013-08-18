@@ -8,7 +8,14 @@ import Data.Monoid
 
 import Types
 
-type Space layer = layer -> Point -> Any
+
+type AtPoint = (Any, Any)
+type Space layer = ([(Point, AtPoint)], layer -> Point -> AtPoint)
+
+obstacle, hazard, crushingObst :: AtPoint
+obstacle = (Any True, mempty)
+hazard   = (mempty, Any True)
+crushingObst = obstacle `mappend` hazard
 
 _x, _y :: Lens' Point Float
 _x = _1
@@ -30,17 +37,33 @@ getPoints r = map (both %~ (r^.)) lenses
 		(rRight, rBottom),
 		(rLeft,  rBottom)]
 
+getMiddle :: Rect -> Point
+getMiddle r = ((r^.rLeft+r^.rRight)/2, (r^.rBottom+r^.rTop)/2)
+
+square :: Float -> Point -> Rect
+square r' (x, y) = Rect (x-r) (x+r) (y-r) (y+r)
+	where r = r'/2
+
 isInside :: Rect -> Point -> Bool
 isInside r (x, y) = x > r^.rLeft    && x < r^.rRight
 		 && y > r^.rBottom  && y < r^.rTop
 
-toSpace :: (layer -> Bool) -> Rect -> Space layer
-toSpace f r l = Any . if f l
-		then isInside r
-		else const False
+toSpace :: (layer -> Bool) -> AtPoint -> Rect -> Space layer
+toSpace layers ap r = (map f2 $ getPoints r, f1)
+	where	f1 l p = if layers l && isInside r p
+			then ap
+			else mempty
+		f2 p = (p, ap)
 
-fitsIn :: (Rect, layer) -> Space layer -> Bool
-(r, l) `fitsIn` space = not $ getAny $ mconcat $ map (space l) $ getPoints r
+blocked (Any x, _) = x
+deadly  (_, Any x) = x
+
+atPoint :: layer -> Space layer -> Point -> AtPoint
+atPoint layer (_, f) p = f layer p
+
+atRect :: layer -> Space layer -> Rect -> AtPoint
+atRect l (ps, f) r =  mconcat $ map (f l) (getPoints r)
+		   ++ map snd (filter (isInside r . fst) ps)
 
 morphRect t (Rect a1 a2 a3 a4) (Rect b1 b2 b3 b4) = Rect (a1%b1) (a2%b2) (a3%b3) (a4%b4)
 	where a % b = a*(1-t)+b*t

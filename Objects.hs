@@ -14,10 +14,10 @@ import Data.Map (Map)
 import qualified Data.Map as M
 
 doesFit r l = fmap f ask
-	where f ((_, space), _) = (r, l) `fitsIn` space
+	where f ((_, space), _) = not $ blocked $ atRect l space r
 
 draw pic = tell (mempty, pic)
-block f rect = tell ((mempty, toSpace f rect), mempty)
+block f ap rect = tell ((mempty, toSpace f ap rect), mempty)
 entity e = tell ((M.singleton (e^.eID) e, mempty), mempty)
 
 drawAs mode = draw . Color (modeToCol mode)
@@ -25,15 +25,15 @@ drawAs mode = draw . Color (modeToCol mode)
 
 wall layers rect = toObj World () $ do
 	drawAs World $ drawR rect
-	block layers rect
+	block layers obstacle rect
 
 walls layers = mconcat . map (wall layers)
 
-movingWall layers mode points steptime = toObj mode (cycle points, steptime) $ do
+movingWall layers mode steptime points = toObj mode (cycle points, steptime) $ do
 	(l@(r1:r2:rst), n) <- get
 	let	t = 1 - (fromIntegral n / fromIntegral steptime)
 		r = morphRect t r1 r2
-	block layers r
+	block layers obstacle r
 	drawAs mode $ drawR r
 	put $ if n <= 0
 		then (r2:rst, steptime)
