@@ -31,9 +31,10 @@ tieWorldObj tconf wObj = feedBack $ fmap f wObj
 	where f (world, pic) = (world, (pic, tconf world))
 
 main = mainWith (mode, black, 30) $ tieWorldObj timeconf obj
-	where	obj1 = solidWalls $ [square 100 (0,0), square 20 (-200, -200),
-						Rect 400 700 (-200) (-100)]
-		obj2 mode = solidMovingWall mode 60 $ map (square 100)
+	where	obj1 = solidWalls obstacle $ [square 100 (0,0),
+					square 20 (-200, -200),
+					Rect 400 700 (-200) (-100)]
+		obj2 mode = solidMovingWall crushingObst mode 60 $ map (square 100)
 				[(100,100), (-100,100), (-100,-100), (100,-100)]
 		objp = player () [0] $ square 90 (-400, 0)
 		obj = mconcat [obj1, obj2 Global, obj2 World, objp,

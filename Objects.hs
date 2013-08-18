@@ -15,6 +15,8 @@ import qualified Data.Map as M
 
 doesFit r l = fmap f ask
 	where f ((_, space), _) = not $ blocked $ atRect l space r
+doesDie r l = fmap f ask
+	where f ((_, space), _) = deadly $ atRect l space r
 
 draw pic = tell (mempty, pic)
 block f ap rect = tell ((mempty, toSpace f ap rect), mempty)
@@ -23,18 +25,20 @@ entity e = tell ((M.singleton (e^.eID) e, mempty), mempty)
 drawAs mode = draw . Color (modeToCol mode)
 
 
-wall layers rect = toObj World () $ do
-	drawAs World $ drawR rect
-	block layers obstacle rect
+doRect mode ap layers rect = do
+	drawAs mode $ drawR rect
+	block layers ap rect
+	when (deadly ap) $ draw $ drawHaz rect
 
-walls layers = mconcat . map (wall layers)
 
-movingWall layers mode steptime points = toObj mode (cycle points, steptime) $ do
+wall layers ap rect = toObj World () $ doRect World ap layers rect
+walls layers ap = mconcat . map (wall layers ap)
+
+movingWall layers ap mode steptime points = toObj mode (cycle points, steptime) $ do
 	(l@(r1:r2:rst), n) <- get
 	let	t = 1 - (fromIntegral n / fromIntegral steptime)
 		r = morphRect t r1 r2
-	block layers obstacle r
-	drawAs mode $ drawR r
+	doRect mode ap layers r
 	put $ if n <= 0
 		then (r2:rst, steptime)
 		else (l, n-1)
@@ -43,8 +47,11 @@ solidMovingWall  = movingWall  $ const True
 solidWall        = wall        $ const True
 solidWalls       = walls       $ const True
 
-player layer eid rect = toObj Player rect $ do
-	r <- get
+player layer eid rect = toObj Player (Just rect) $ do
+    s <- get
+    case s of
+      Nothing -> drawAs Player $ Text "dead"
+      Just r -> do
 	ui <- fmap snd ask
 	let	f (k, v) = if ui k == Down then v else mempty
 		vec = mconcat $ map f keys
@@ -53,7 +60,8 @@ player layer eid rect = toObj Player rect $ do
 	let	r' = if willMove then r_moved else r
 	drawAs Player $ drawR r'
 	entity $ Entity eid EPlayer $ Just r'
-	put r'
+	willDie <- doesDie r' layer
+	put $ if willDie then Nothing else Just r'
 	where keys = [
 		(SpecialKey KeyLeft,  (-5,  0)),
 		(SpecialKey KeyRight, ( 5,  0)),
