@@ -36,7 +36,8 @@ main = mainWith (mode, black, 30) $ tieWorldObj timeconf obj
 						  Rect (-200) (-100) 100    200,
 						  Rect 100    200    100    200,
 						  Rect 100    200    (-200) (-100)] 30
-		obj = mconcat [obj1, obj2 Global, obj2 World,
+		objp = player () [0] $ Rect 200 290 0 90
+		obj = mconcat [obj1, obj2 Global, obj2 World, objp,
 			clock Global (-600, -200), clock Player (-600, -260), clock World (-600, -320)]
 		timeconf w ui mode = case mode of
 			Global -> Forward

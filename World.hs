@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module World where
 
 import Types
@@ -5,12 +7,18 @@ import Time
 import Space
 
 import Data.Map (Map)
-import Data.Map as M
+import qualified Data.Map as M
 import Graphics.Gloss
 import Data.Monoid
 import Control.Monad.RWS
+import Control.Lens
 
-data Entity = Entity {_eID :: ID, _eRect :: Maybe Rect} --TODO Typen
+data EType = EPlayer
+	deriving (Show, Read, Eq)
+
+data Entity = Entity {_eID :: ID, _eType :: EType, _eRect :: Maybe Rect}
+	deriving (Show, Read, Eq)
+makeLenses ''Entity
 
 type WorldState layer = Map ID Entity
 type World layer = (WorldState layer, Space layer)
