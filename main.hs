@@ -36,8 +36,9 @@ main = mainWith (mode, black, 30) $ tieWorldObj timeconf obj
 					Rect 400 700 (-200) (-100)]
 		obj2 mode = solidMovingWall crushingObst mode 60 $ map (square 100)
 				[(100,100), (-100,100), (-100,-100), (100,-100)]
-		objp = player () [0] $ square 90 (-400, 0)
-		obj = mconcat [obj1, obj2 Global, obj2 World, objp,
+		objp = player 0 [0] $ square 90 (-400, 0)
+		objE = solidSimpleEnemy 1 World [0] $ square 50 (400,0)
+		obj = mconcat [obj1, obj2 Global, obj2 World, objp, objE,
 			clock Global (-600, -200), clock Player (-600, -260), clock World (-600, -320)]
 		timeconf w ui mode = case mode of
 			Global -> Forward

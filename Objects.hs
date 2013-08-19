@@ -10,13 +10,18 @@ import Graphics.Gloss.Interface.Pure.Game
 import Data.Monoid
 import Control.Monad.RWS
 import Control.Lens
+import Data.Maybe
 import Data.Map (Map)
 import qualified Data.Map as M
+
+speed = 5
 
 doesFit r l = fmap f ask
 	where f ((_, space), _) = not $ blocked $ atRect l space r
 doesDie r l = fmap f ask
 	where f ((_, space), _) = deadly $ atRect l space r
+getEntity id = fmap f ask
+	where f ((m, _), _) = M.lookup id m
 
 draw pic = tell (mempty, pic)
 block f ap rect = tell ((mempty, toSpace f ap rect), mempty)
@@ -63,12 +68,29 @@ player layer eid rect = toObj Player (Just rect) $ do
 	willDie <- doesDie r' layer
 	put $ if willDie then Nothing else Just r'
 	where keys = [
-		(SpecialKey KeyLeft,  (-5,  0)),
-		(SpecialKey KeyRight, ( 5,  0)),
-		(SpecialKey KeyDown,  ( 0, -5)),
-		(SpecialKey KeyUp,    ( 0,  5))]
+		(SpecialKey KeyLeft,  (-s,  0)),
+		(SpecialKey KeyRight, ( s,  0)),
+		(SpecialKey KeyDown,  ( 0, -s)),
+		(SpecialKey KeyUp,    ( 0,  s))]
+		where s = speed
 
+simpleEnemy layers layer mode pid rect = toObj mode rect $ do
+	r <- get
+	playerR <- fmap (maybe r $ fromMaybe r . view eRect) $ getEntity pid
+	let	(pos, ownpos) = (getMiddle playerR, getMiddle r)
+		vec = scaleP 0.1 $ pos `mappend` scaleP (-1) ownpos
+		divide 0 = 0
+		divide x = speed/x
+		vec' = flip scaleP vec $ divide $ getDist (0,0) vec
+		r_moved = move r vec'
+	willMove <- doesFit r_moved layer
+	let	r' = if willMove then r_moved else r
+	doRect mode hazard layers r'
+	draw $ Color cyan $ drawLine $ getPoints $
+		flip move ownpos $ square 20 $ scaleP 4 vec'
+	put r'
 
+solidSimpleEnemy layer = simpleEnemy (/= layer) layer
 
 clock mode (x, y) = toObj mode 0 $ do
 	t <- get

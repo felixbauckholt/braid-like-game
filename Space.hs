@@ -69,3 +69,7 @@ morphRect t (Rect a1 a2 a3 a4) (Rect b1 b2 b3 b4) = Rect (a1%b1) (a2%b2) (a3%b3)
 	where a % b = a*(1-t)+b*t
 
 move r (x, y) = rLeft +~ x $ rRight +~ x $ rTop +~ y $ rBottom +~ y $ r
+
+getDist (x1, y1) (x2, y2) = sqrt $ (x2-x1)^2 + (y2-y1)^2
+
+scaleP factor (x, y) = (x*factor, y*factor)
