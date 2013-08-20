@@ -64,7 +64,8 @@ player layer eid rect = toObj Player (Just rect) $ do
 	willMove <- doesFit r_moved layer
 	let	r' = if willMove then r_moved else r
 	drawAs Player $ drawR r'
-	entity $ Entity eid EPlayer $ Just r'
+	entity $ flip (Entity eid) (Just r') $
+		EPlayer $ PlayerData $ if willMove then vec else mempty
 	willDie <- doesDie r' layer
 	put $ if willDie then Nothing else Just r'
 	where keys = [

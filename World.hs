@@ -13,7 +13,11 @@ import Data.Monoid
 import Control.Monad.RWS
 import Control.Lens
 
-data EType = EPlayer
+data PlayerData = PlayerData {_lastMovement :: Point}
+	deriving (Show, Read, Eq)
+makeLenses ''PlayerData
+
+data EType = EPlayer PlayerData
 	deriving (Show, Read, Eq)
 
 data Entity = Entity {_eID :: ID, _eType :: EType, _eRect :: Maybe Rect}
