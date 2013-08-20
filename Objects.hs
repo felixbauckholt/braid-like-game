@@ -14,7 +14,7 @@ import Data.Maybe
 import Data.Map (Map)
 import qualified Data.Map as M
 
-speed = 5
+speed = 2
 
 doesFit r l = fmap f ask
 	where f ((_, space), _) = not $ blocked $ atRect l space r
@@ -88,7 +88,7 @@ simpleEnemy layers layer mode pid rect = toObj mode rect $ do
 	let	r' = if willMove then r_moved else r
 	doRect mode hazard layers r'
 	draw $ Color cyan $ drawLine $ getPoints $
-		flip move ownpos $ square 20 $ scaleP 4 vec'
+		flip move ownpos $ square 10 $ scaleP 3 vec'
 	put r'
 
 solidSimpleEnemy layer = simpleEnemy (/= layer) layer

@@ -10,6 +10,37 @@ import Control.Lens
 import Data.Maybe
 import qualified Data.Map as M
 
+
+stdMapStr = [
+	"xxxxxxxxxxxxxxxxxxx",
+	"x        x        x",
+	"x xx xxx x xxx xx x",
+	"x                 x",
+	"x xx x xxxxx x xx x",
+	"x    x   x   x    x",
+	"xxxx xxx x xxx xxxx",
+	"   x x       x x   ",
+	"xxxx x xx xx x xxxx",
+	"       x   x       ",
+	"xxxx x xxxxx x xxxx",
+	"   x x       x x   ",
+	"xxxx x xxxxx x xxxx",
+	"x        x        x",
+	"x xx xxx x xxx xx x",
+	"x  x           x  x",
+	"xx x x xxxxx x x xx",
+	"x    x   x   x    x",
+	"x xxxxxx x xxxxxx x",
+	"x                 x",
+	"xxxxxxxxxxxxxxxxxxx"]
+
+squares m = concatMap f $ zip stdMapStr [0, m ..]
+	where f (l, y) = mapMaybe f' $ zip l [0, m ..]
+		where	f' ('x', x) = Just $ square m (x, y)
+			f' _         = Nothing
+
+
+
 initialUserInput = const Up
 
 onEvent :: Event -> UserInput -> UserInput
@@ -59,14 +90,14 @@ placeTimeConf pid (ws, _) ui = f
 				| otherwise     = Nothing
 
 main = mainWith (mode, black, 30) $ tieWorldObj timeconf obj
-	where	obj1 = solidWalls obstacle $ [square 100 (0,0),
-					square 20 (-200, -200),
-					Rect 400 700 (-200) (-100)]
-		obj2 mode = solidMovingWall crushingObst mode 60 $ map (square 100)
-				[(100,100), (-100,100), (-100,-100), (100,-100)]
-		objp = player 0 [0] $ square 90 (-400, 0)
-		objE = solidSimpleEnemy 1 World [0] $ square 50 (400,0)
-		obj = mconcat [obj1, obj2 Global, obj2 World, objp, objE,
+	where	obj1 = solidWalls obstacle $ map (flip move (-270, -270)) $ squares 30
+		obj2 mode = solidMovingWall crushingObst mode 90 $ map (square 30)
+				[(150,180), (-150,180), (-150,-180), (150,-180)]
+		obj3 mode = solidMovingWall crushingObst mode 60 $ map (square 30)
+				[(90,60), (-90,60), (-90,-60), (90,-60)]
+		objp = player 0 [0] $ square 20 (-400, 0)
+		objE = solidSimpleEnemy 1 World [0] $ square 16 (0,0)
+		obj = mconcat [obj1, objE, objp, obj2 World, obj3 Player,
 			clock Global (-600, -200), clock Player (-600, -260), clock World (-600, -320)]
 		--timeconf = stdTimeConf
 		timeconf = placeTimeConf [0]
