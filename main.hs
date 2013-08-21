@@ -97,7 +97,8 @@ main = mainWith (mode, black, 30) $ tieWorldObj timeconf obj
 				[(90,60), (-90,60), (-90,-60), (90,-60)]
 		objp = player 0 [0] $ square 20 (-400, 0)
 		objE = solidSimpleEnemy 1 World [0] $ square 16 (0,0)
-		obj = mconcat [obj1, objE, objp, obj2 World, obj3 Player,
+		objF = finish [0] $ square 30 (0,0)
+		obj = mconcat [obj1, objE, objp, obj2 World, obj3 Player, objF,
 			clock Global (-600, -200), clock Player (-600, -260), clock World (-600, -320)]
 		--timeconf = stdTimeConf
 		timeconf = placeTimeConf [0]

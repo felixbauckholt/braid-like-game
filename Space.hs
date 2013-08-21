@@ -65,6 +65,8 @@ atRect :: layer -> Space layer -> Rect -> AtPoint
 atRect l (ps, f) r =  mconcat $ map (f l) (getPoints r)
 		   ++ map snd (filter (isInside r . fst) ps)
 
+intersect r1 r2 = isInside r2 `any` getPoints r1 || isInside r1 `any` getPoints r2
+
 morphRect t (Rect a1 a2 a3 a4) (Rect b1 b2 b3 b4) = Rect (a1%b1) (a2%b2) (a3%b3) (a4%b4)
 	where a % b = a*(1-t)+b*t
 

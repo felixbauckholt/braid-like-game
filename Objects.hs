@@ -52,6 +52,15 @@ solidMovingWall  = movingWall  $ const True
 solidWall        = wall        $ const True
 solidWalls       = walls       $ const True
 
+finish pid r = toObj Global () $ do
+	mPlayer <- getEntity pid
+	let finished = case mPlayer of
+		Just Entity {_eRect=Just pr} -> intersect r pr
+		Nothing -> False
+	drawAs Player $ if finished
+		then Text "finished"
+		else drawLine $ getPoints r
+
 player layer eid rect = toObj Player (Just rect) $ do
     s <- get
     case s of
