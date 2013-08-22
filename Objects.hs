@@ -1,3 +1,5 @@
+{-# LANGUAGE NoMonomorphismRestriction #-}
+
 module Objects where
 
 import Types
@@ -11,6 +13,8 @@ import Data.Monoid
 import Control.Monad.RWS
 import Control.Lens
 import Data.Maybe
+import Data.Function
+import Data.List (sortBy)
 import Data.Map (Map)
 import qualified Data.Map as M
 
@@ -22,6 +26,8 @@ doesDie r l = fmap f ask
 	where f ((_, space), _) = deadly $ atRect l space r
 getEntity id = fmap f ask
 	where f ((m, _), _) = M.lookup id m
+getEntities = fmap f ask
+	where f ((m, _), _) = M.elems m
 
 draw pic = tell (mempty, pic)
 block f ap rect = tell ((mempty, toSpace f ap rect), mempty)
@@ -48,10 +54,6 @@ movingWall layers ap mode steptime points = toObj mode (cycle points, steptime) 
 		then (r2:rst, steptime)
 		else (l, n-1)
 
-solidMovingWall  = movingWall  $ const True
-solidWall        = wall        $ const True
-solidWalls       = walls       $ const True
-
 finish pid r = toObj Global () $ do
 	mPlayer <- getEntity pid
 	let finished = case mPlayer of
@@ -60,6 +62,38 @@ finish pid r = toObj Global () $ do
 	drawAs Player $ if finished
 		then Text "finished"
 		else drawLine $ getPoints r
+
+key eid mode r = toObj mode r $ do
+	ownR <- get
+	es <- getEntities
+	let	(holder:_) = mapMaybe f (sortBy sorter es) ++ [ownR]
+		sorter = compare `on` rank `on` (^.eType)
+		f Entity {_eType = EKey} = Nothing
+		f Entity {_eRect = Just r}
+			| intersect r ownR = Just r
+		f _ = Nothing
+		ownR' = move ownR $ getMiddle holder `mappend` scaleP (-1) (getMiddle ownR)
+	drawAs mode $ drawLine $ getPoints ownR'
+	draw $ Color magenta $ drawLine $ map (mappend $ getMiddle ownR) $
+		[(0, -2), (0, -6), (4, -6), (4, -2), (8, -2), (8, 2), (-6, 2),
+		 (-10, 6), (-15, 0), (-10, -6), (-6, -2)]
+	entity $ Entity eid EKey $ Just ownR
+	put ownR'
+	where	rank EDoor       = 0
+		rank (EPlayer _) = 1
+		rank _           = 100
+
+door layers eid mode ownR = toObj mode () $ do
+	es <- getEntities
+	let	nearKeys = filter f es
+		f Entity {_eType = EKey, _eRect = Just r} = intersect r ownR
+		f _ = False
+	case nearKeys of
+		k:_ -> return ()
+		_   -> doRect mode obstacle layers ownR
+	entity $ Entity eid EDoor $ Just ownR
+	draw $ Color magenta $ drawLine $ map (mappend $ getMiddle ownR) $
+		[(-5, 0), (0, 5), (5, 0), (3, -5), (7, -12), (-7, -12), (-3, -5)]
 
 player layer eid rect = toObj Player (Just rect) $ do
     s <- get
@@ -100,6 +134,10 @@ simpleEnemy layers layer mode pid rect = toObj mode rect $ do
 		flip move ownpos $ square 10 $ scaleP 3 vec'
 	put r'
 
+solidMovingWall  = movingWall  $ const True
+solidWall        = wall        $ const True
+solidWalls       = walls       $ const True
+solidDoor        = door        $ const True
 solidSimpleEnemy layer = simpleEnemy (/= layer) layer
 
 clock mode (x, y) = toObj mode 0 $ do

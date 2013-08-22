@@ -18,6 +18,8 @@ data PlayerData = PlayerData {_lastMovement :: Point}
 makeLenses ''PlayerData
 
 data EType = EPlayer PlayerData
+	   | EKey
+	   | EDoor
 	deriving (Show, Read, Eq)
 
 data Entity = Entity {_eID :: ID, _eType :: EType, _eRect :: Maybe Rect}
