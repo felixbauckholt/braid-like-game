@@ -19,7 +19,8 @@ makeLenses ''PlayerData
 
 data EType = EPlayer PlayerData
 	   | EKey
-	   | EDoor
+	   | EDoor (Maybe ID)
+	   | EEnemy
 	deriving (Show, Read, Eq)
 
 data Entity = Entity {_eID :: ID, _eType :: EType, _eRect :: Maybe Rect}

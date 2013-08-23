@@ -34,7 +34,28 @@ stdMapStr = [
 	"x                 x",
 	"xxxxxxxxxxxxxxxxxxx"]
 
-squares m = concatMap f $ zip stdMapStr [0, m ..]
+l1MapStr = [
+	"xxxxxxxxxxxxxxxxxxx",
+	"x                 x",
+	"x                 x",
+	"x                 x",
+	"x               xxx",
+	"x               xKx",
+	"x               x x",
+	"x               D x",
+	"x               xxx",
+	"x               D d",
+	"x               xxx",
+	"x                 x",
+	"x                 x",
+	"x                 x",
+	"x         xx      x",
+	"x         Kx      x",
+	"x     xxxx xxxxxxxx",
+	"x      k  D      mx",
+	"xxxxxxxxxxxxxxxxxxx"]
+
+squares m = concatMap f $ zip l1MapStr [0, m ..]
 	where f (l, y) = mapMaybe f' $ zip l [0, m ..]
 		where	f' ('x', x) = Just $ square m (x, y)
 			f' _         = Nothing
@@ -91,16 +112,17 @@ placeTimeConf pid (ws, _) ui = f
 
 main = mainWith (mode, black, 30) $ tieWorldObj timeconf obj
 	where	obj1 = solidWalls obstacle $ map (flip move (-270, -270)) $ squares 30
-		obj2 mode = solidMovingWall crushingObst mode 90 $ map (square 30)
-				[(150,180), (-150,180), (-150,-180), (150,-180)]
-		obj3 mode = solidMovingWall crushingObst mode 60 $ map (square 30)
-				[(90,60), (-90,60), (-90,-60), (90,-60)]
-		objp = player 0 [0] $ square 20 (-400, 0)
-		objE = solidSimpleEnemy 1 World [0] $ square 16 (0,0)
-		objF = finish [0] $ square 30 (0,0)
-		objK = key [1] World $ square 35 (-350,0)
-		objD = solidDoor [2] Global $ square 30 (-300, 0)
-		obj = mconcat [obj1, objE, objp, obj2 World, obj3 Player, objF, objK, objD,
+		objp = player 0 [0] $ square 20 (-240, 0)
+		objE = solidSimpleEnemy 1 [3] Player [0] $ square 16 (240, 240)
+		objF = finish [0] $ square 30 (300,0)
+		objK1 = key [0, 1] World $ square 35 (-60, 240)
+		objK2 = key [1, 1] Global $ square 35 (30, 180)
+		objK3 = key [2, 1] Global $ square 35 (240, -120)
+		objD1 = solidDoor [0, 2] Global $ square 30 (30, 240)
+		objD2 = solidDoor [1, 2] World $ square 30 (270, 0)
+		objD3 = solidDoor [2, 2] Global $ square 30 (210, 0)
+		objD4 = solidDoor [3, 2] Global $ square 30 (210, -60)
+		obj = mconcat [obj1, objE, objp, objF, objK1, objK2, objK3, objD1, objD2, objD3, objD4,
 			clock Global (-600, -200), clock Player (-600, -260), clock World (-600, -320)]
 		--timeconf = stdTimeConf
 		timeconf = placeTimeConf [0]

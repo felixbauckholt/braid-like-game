@@ -42,7 +42,7 @@ doRect mode ap layers rect = do
 	when (deadly ap) $ draw $ drawHaz rect
 
 
-wall layers ap rect = toObj World () $ doRect World ap layers rect
+wall layers ap rect = toObj Global () $ doRect World ap layers rect
 walls layers ap = mconcat . map (wall layers ap)
 
 movingWall layers ap mode steptime points = toObj mode (cycle points, steptime) $ do
@@ -79,9 +79,12 @@ key eid mode r = toObj mode r $ do
 		 (-10, 6), (-15, 0), (-10, -6), (-6, -2)]
 	entity $ Entity eid EKey $ Just ownR
 	put ownR'
-	where	rank EDoor       = 0
-		rank (EPlayer _) = 1
-		rank _           = 100
+	where	rank (EDoor (Just id))
+		       | id /= eid = 100
+		rank (EDoor _)     = 0
+		rank (EPlayer _)   = 1
+		rank EEnemy        = 2
+		rank _             = 100
 
 door layers eid mode ownR = toObj mode () $ do
 	es <- getEntities
@@ -89,9 +92,10 @@ door layers eid mode ownR = toObj mode () $ do
 		f Entity {_eType = EKey, _eRect = Just r} = intersect r ownR
 		f _ = False
 	case nearKeys of
-		k:_ -> return ()
-		_   -> doRect mode obstacle layers ownR
-	entity $ Entity eid EDoor $ Just ownR
+		k:_ -> entity $ Entity eid (EDoor $ Just $ k^.eID) $ Just ownR
+		_   -> do
+			doRect mode obstacle layers ownR
+			entity $ Entity eid (EDoor Nothing) $ Just ownR
 	draw $ Color magenta $ drawLine $ map (mappend $ getMiddle ownR) $
 		[(-5, 0), (0, 5), (5, 0), (3, -5), (7, -12), (-7, -12), (-3, -5)]
 
@@ -118,7 +122,7 @@ player layer eid rect = toObj Player (Just rect) $ do
 		(SpecialKey KeyUp,    ( 0,  s))]
 		where s = speed
 
-simpleEnemy layers layer mode pid rect = toObj mode rect $ do
+simpleEnemy layers layer eid mode pid rect = toObj mode rect $ do
 	r <- get
 	playerR <- fmap (maybe r $ fromMaybe r . view eRect) $ getEntity pid
 	let	(pos, ownpos) = (getMiddle playerR, getMiddle r)
@@ -132,6 +136,7 @@ simpleEnemy layers layer mode pid rect = toObj mode rect $ do
 	doRect mode hazard layers r'
 	draw $ Color cyan $ drawLine $ getPoints $
 		flip move ownpos $ square 10 $ scaleP 3 vec'
+	entity $ Entity eid EEnemy $ Just r'
 	put r'
 
 solidMovingWall  = movingWall  $ const True
